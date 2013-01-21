@@ -84,10 +84,15 @@ Creates a client object with methods for all beanstalkd commands as of version 1
 ### Connection methods
 
 **`connect(callback=None)`**  
-Establish the client's connection to beanstalkd. Calls back when connection has been established. When first connected, the client will attempt to re-connect if the socket is closed.
+Establish the client's connection to beanstalkd. Calls back when connection has been established. After first attempt to connect, the client will automatically attempt to re-connect (with 1 second intervals) if the socket is closed unexpectedly.
 
 **`close(callback=None)`**  
 Close the client's connection to beanstalkd. Calls back when connection has been closed.
+
+**`closed()`**
+Return True if the connection is established, otherwise returns False.
+
+If the connection is down (also while re-connecting), any attempt to communicate with beanstalkd, using methods in the following sections, will raise an IOError exception.
 
 ### Producer methods
 

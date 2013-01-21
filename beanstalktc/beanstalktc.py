@@ -20,7 +20,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 '''
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 import socket
 import time
@@ -39,7 +39,6 @@ class UnexpectedResponse(BeanstalktcException): pass
 class CommandFailed(BeanstalktcException): pass
 class Buried(BeanstalktcException): pass
 class DeadlineSoon(BeanstalktcException): pass
-class NotConnected(BeanstalktcException): pass
 
 
 class Client(object):
@@ -51,18 +50,37 @@ class Client(object):
         self.port = port
         self.io_loop = io_loop or IOLoop.instance()
         self._stream = None
+        self._using = 'default'  # current tube
+        self._watching = set()   # set of watched tubes
 
     def _reconnect(self, callback):
+        # wait some time before trying to re-connect
         self.io_loop.add_timeout(time.time() + RECONNECT_TIMEOUT,
-                lambda: self.connect(callback))
+                lambda: self.connect(self._reconnected))
+
+    def _reconnected(self):
+        # re-establish the used tube and tubes being watched
+        watch_list = list(self._watching)
+
+        def do_next(arg):
+            try:
+                if watch_list:
+                    self.watch(watch_list.pop(), do_next)
+                elif self._using != 'default':
+                    self.use(self._using)
+            except:
+                # ignored, as next re-connect will retry the operation
+                pass
+
+        do_next()
 
     def connect(self, callback=None):
         """Connect to beanstalkd server."""
-        if not self._stream or self._stream.closed():
+        if self.closed():
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM,
                     socket.IPPROTO_TCP)
             self._stream = IOStream(self._socket, io_loop=self.io_loop)
-            self._stream.set_close_callback(lambda: self._reconnect(callback))
+            self._stream.set_close_callback(self._reconnect)
         self._stream.connect((self.host, self.port), callback)
 
     def close(self, callback=None):
@@ -71,14 +89,10 @@ class Client(object):
         self._stream.write('quit\r\n', self._stream.close)
 
     def closed(self):
-        '''Returns true if the connection has been closed.'''
-        return self._stream.closed()
+        '''Returns True if the connection is closed.'''
+        return not self._stream or self._stream.closed()
 
     def _interact(self, command, callback, expected_ok=[], expected_err=[]):
-        if self.closed():
-            raise NotConnected('Not connected to the beanstalkd server'
-                    ' - attempting to reconnect')
-
         # write command to socket stream
         self._stream.write(command,
                 # when command is written: read line from socket stream
@@ -180,7 +194,12 @@ class Client(object):
     
         Calls back with the name of the tube now being used.
         """
-        self._interact_value('use %s\r\n' % name, callback, ['USING'])
+        def using(name):
+            self._using = name
+            if callback:
+                callback(name)
+
+        self._interact_value('use %s\r\n' % name, using, ['USING'])
     
     #
     #  Worker commands
@@ -259,6 +278,11 @@ class Client(object):
     
         Call back with number of tubes currently in the watch list.
         """
+        def watching(count):
+            self._watching.add(name)
+            if callback:
+                callback(count)
+
         self._interact_value('watch %s\r\n' % name, callback, ['WATCHING'])
 
     def ignore(self, name, callback=None):
@@ -269,7 +293,12 @@ class Client(object):
         A CommandFailed exception is raised on an attempt to ignore the only
         tube in the watch list.
         """
-        self._interact_value('ignore %s\r\n' % name, callback, ['WATCHING'],
+        def ignoring(count):
+            self._watching.remove(name)
+            if callback:
+                callback(count)
+
+        self._interact_value('ignore %s\r\n' % name, ignoring, ['WATCHING'],
             ['NOT_IGNORED'])
 
     #
