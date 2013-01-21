@@ -20,9 +20,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 '''
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 import socket
+import time
 
 from tornado.ioloop import IOLoop
 from tornado.iostream import IOStream
@@ -30,6 +31,7 @@ from tornado.iostream import IOStream
 
 DEFAULT_PRIORITY = 2 ** 31
 DEFAULT_TTR = 120  # Time (in seconds) To Run a job, min. 1 sec.
+RECONNECT_TIMEOUT = 1  # Time (in seconds) between re-connection attempts
 
 
 class BeanstalktcException(Exception): pass
@@ -37,6 +39,7 @@ class UnexpectedResponse(BeanstalktcException): pass
 class CommandFailed(BeanstalktcException): pass
 class Buried(BeanstalktcException): pass
 class DeadlineSoon(BeanstalktcException): pass
+class NotConnected(BeanstalktcException): pass
 
 
 class Client(object):
@@ -47,12 +50,19 @@ class Client(object):
         self.host = host
         self.port = port
         self.io_loop = io_loop or IOLoop.instance()
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM,
-                socket.IPPROTO_TCP)
-        self._stream = IOStream(self._socket, io_loop=self.io_loop)
+        self._stream = None
+
+    def _reconnect(self, callback):
+        self.io_loop.add_timeout(time.time() + RECONNECT_TIMEOUT,
+                lambda: self.connect(callback))
 
     def connect(self, callback=None):
         """Connect to beanstalkd server."""
+        if not self._stream or self._stream.closed():
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM,
+                    socket.IPPROTO_TCP)
+            self._stream = IOStream(self._socket, io_loop=self.io_loop)
+            self._stream.set_close_callback(lambda: self._reconnect(callback))
         self._stream.connect((self.host, self.port), callback)
 
     def close(self, callback=None):
@@ -65,6 +75,10 @@ class Client(object):
         return self._stream.closed()
 
     def _interact(self, command, callback, expected_ok=[], expected_err=[]):
+        if self.closed():
+            raise NotConnected('Not connected to the beanstalkd server'
+                    ' - attempting to reconnect')
+
         # write command to socket stream
         self._stream.write(command,
                 # when command is written: read line from socket stream
