@@ -20,7 +20,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 '''
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 import socket
 import time
@@ -53,7 +53,7 @@ class Client(object):
         self._using = 'default'  # current tube
         self._watching = set()   # set of watched tubes
 
-    def _reconnect(self, callback):
+    def _reconnect(self):
         # wait some time before trying to re-connect
         self.io_loop.add_timeout(time.time() + RECONNECT_TIMEOUT,
                 lambda: self.connect(self._reconnected))
@@ -62,7 +62,7 @@ class Client(object):
         # re-establish the used tube and tubes being watched
         watch_list = list(self._watching)
 
-        def do_next(arg):
+        def do_next(_=None):
             try:
                 if watch_list:
                     self.watch(watch_list.pop(), do_next)
