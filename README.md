@@ -25,16 +25,16 @@ This simple example involves the most basic operations of putting a job in the q
       client.close(ioloop.stop)
     
     def put():
-      client.put('A job to work on', callback=lambda s: show(
-          'Queued a job with jid %d', s, reserve))
+      client.put("A job to work on", callback=lambda s: show(
+          "Queued a job with jid %d", s, reserve))
     
     def reserve():
       client.reserve(callback=lambda s: show(
-          'Reserved job %s', s, lambda: delete(s['jid'])))
+          "Reserved job %s", s, lambda: delete(s["jid"])))
     
     def delete(jid):
       client.delete(jid, callback=lambda: show(
-          'Deleted job with jid %d', jid, stop))
+          "Deleted job with jid %d", jid, stop))
 
     client = beanstalktc.Client()
     client.connect(put)
@@ -44,10 +44,12 @@ This simple example involves the most basic operations of putting a job in the q
 Executing the script (`python demo.py`) with beanstalkd running produces the following output:
 
     Queued a job with jid 1
-    Reserved job {'body': 'A job to work on', 'jid': 1, 'reserved': True}
+    Reserved job {"body": "A job to work on", "jid": 1}
     Deleted job with jid 1
 
 Where `jid` is the job id that beanstalkd has given the job when putting in on the queue.
+
+The client will attempt to automatically re-connect if the socket connection to beanstalkd is closed unexpectedly. In other cases where an error occur, an exception will be passed to the callback function.
 
 ## The job lifecycle
 
@@ -64,7 +66,6 @@ The job is waiting a requested amount of time before it will be transitioned to 
 
 **`buried`**  
 The job is in a FIFO linked list that will not be touched by the server until a client kicks them with the "kick" command  
-
 
 ## Tubes
 
@@ -92,7 +93,7 @@ Close the client's connection to beanstalkd. Calls back when connection has been
 **`closed()`**
 Return True if the connection is established, otherwise returns False.
 
-If the connection is down (also while re-connecting), any attempt to communicate with beanstalkd, using methods in the following sections, will raise an IOError exception.
+If the connection is down (also while re-connecting), any attempt to communicate with beanstalkd, using methods in the following sections, will likely raise an IOError exception.
 
 ### Producer methods
 
@@ -105,8 +106,15 @@ This method is for producers. Subsequent put commands will put jobs into the tub
 ### Worker methods
 
 **`reserve(timeout=None, callback=None)`**  
-Calls back with a newly-reserved job. If no job is available to be reserved, beanstalkd will wait to send a response until one becomes available. Once a job is reserved for the client, the client has limited time to run (TTR) the job before the job times out. When the job times out, the server will put the job back into the ready queue. Both the TTR and the actual time left can be found in response to the `stats-job` command.
-  
+Reserve a job from one of the watched tubes, with optional timeout
+in seconds. Calls back with a newly-reserved job.
+
+If no timeout is given, and no job is available to be reserved, beanstalkd will wait to send a response until one becomes available. Commands issued while waiting for the `reserve` callback will be queued and sent in FIFO order, when communication is resumed.
+
+A timeout value of 0 will cause the server to immediately return either a response or TIMED_OUT. A positive value of timeout will limit the amount of time the client will hold communication until a job becomes available.
+
+Once a job is reserved for the client, the client has limited time to run (TTR) the job before the job times out. When the job times out, the server will put the job back into the ready queue. Both the TTR and the actual time left can be found in response to the `stats-job` command.
+
 **`delete(jid, callback=None)`**  
 Removes a job from the server entirely. It is normally used by the client when the job has successfully run to completion. A client can delete jobs that it has `reserved`, `ready` jobs, `delayed` jobs, and jobs that are `buried`.
 

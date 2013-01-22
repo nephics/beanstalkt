@@ -23,15 +23,14 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
         self.btc.put(body, callback=self.stop)
         jid = self.wait()
         self.assertIsInstance(jid, int)
-        
+
         # reserve the job
         self.btc.reserve(callback=self.stop)
         job = self.wait()
         self.assertIsNotNone(job)
         self.assertEqual(job['jid'], jid)
         self.assertEqual(job['body'], body)
-        self.assertTrue(job['reserved'])
-        
+
         # delete the job
         self.btc.delete(jid, callback=self.stop)
         self.wait()
@@ -43,14 +42,10 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
         self.btc.put(body, delay=1, callback=self.stop)
         jid = self.wait()
 
-        def check(job, reserved=False):
-            self.assertIsNotNone(job)
+        def check(job):
+            self.assertNotIsInstance(job, Exception)
             self.assertEqual(job['jid'], jid)
             self.assertEqual(job['body'], body)
-            if reserved:
-                self.assertTrue(job['reserved'])
-            else:
-                self.assertFalse(job['reserved'])
 
         # peak the next delayed job
         self.btc.peek_delayed(callback=self.stop)
@@ -70,7 +65,7 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
             # kick-job command is not available in Beanstalkd version <= 1.7
             self.btc.kick(callback=self.stop)
             self.wait()
-        
+
         # peak next ready
         self.btc.peek_ready(callback=self.stop)
         check(self.wait())
@@ -78,7 +73,7 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
         # reserve and bury the job
         self.btc.reserve(callback=self.stop)
         job = self.wait()
-        check(job, True)
+        check(job)
         self.btc.bury(jid, callback=self.stop)
         self.wait()
 
@@ -89,7 +84,7 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
         # kick the job to ready
         self.btc.kick(callback=self.stop)
         self.assertEqual(self.wait(), 1)
-        
+
         # delete the job
         self.btc.delete(jid, callback=self.stop)
         self.wait()

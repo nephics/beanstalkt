@@ -1,2 +1,2 @@
-from beanstalktc import (Client, BeanstalktcException, UnexpectedResponse,
-        CommandFailed, Buried, DeadlineSoon)
+from beanstalktc import (Client, BeanstalkException, UnexpectedResponse,
+        CommandFailed, Buried, DeadlineSoon, TimedOut)
