@@ -20,7 +20,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 import socket
 import time
@@ -74,6 +74,7 @@ class Client(object):
         self._watching = set(['default'])   # set of watched tubes
         self._queue = deque()
         self._talking = False
+        self._reconnect_cb = None
 
     def _reconnect(self):
         # wait some time before trying to re-connect
@@ -93,8 +94,11 @@ class Client(object):
                 elif ignore:
                     self.ignore(ignore.pop(), do_next)
                 elif self._using != 'default':
-                    # change the tube used
-                    self.use(self._using)
+                    # change the tube used, and callback to user
+                    self.use(self._using, self._reconnect_cb)
+                elif self._reconnect_cb:
+                    # callback to user
+                    self._reconnect_cb()
             except:
                 # ignored, as next re-connect will retry the operation
                 pass
@@ -111,6 +115,16 @@ class Client(object):
         self._stream = IOStream(self._socket, io_loop=self.io_loop)
         self._stream.set_close_callback(self._reconnect)
         self._stream.connect((self.host, self.port), callback)
+
+    def set_reconnect_callback(self, callback):
+        """Set callback to be called if connection has been lost and
+        re-established again.
+
+        If the connection is closed unexpectedly, the client will automatically
+        attempt to re-connect with 1 second intervals. After re-connecting, the
+        client will attempt to re-establish the used tube and watched tubes.
+        """
+        self._reconnect_cb = callback
 
     def close(self, callback=None):
         """Close connection to server."""
