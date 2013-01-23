@@ -455,7 +455,7 @@ class Client(object):
         self._peek('-buried', callback)
 
     def kick(self, bound=1, callback=None):
-        """Kick at most `bound` jobs into the ready queue.
+        """Kick at most `bound` jobs into the ready queue from the current tube.
 
         Calls back with the number of jobs actually kicked.
         """
