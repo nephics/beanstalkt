@@ -20,7 +20,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 
 import socket
 import time
@@ -172,7 +172,10 @@ class Client(object):
         error = None
         err_args = dict(request=req, status=status, values=values)
 
-        if status == 'BURIED':
+        if req.ok and status in req.ok:
+            # avoid raising a Buried exception when using the bury command
+            pass
+        elif status == 'BURIED':
             error = Buried(**err_args)
         elif status == 'TIMED_OUT':
             error = TimedOut(**err_args)
@@ -180,7 +183,7 @@ class Client(object):
             error = DeadlineSoon(**err_args)
         elif req.err and status in req.err:
             error = CommandFailed(**err_args)
-        elif not req.ok or status not in req.ok:
+        else:
             error = UnexpectedResponse(**err_args)
 
         resp = Bunch(req=req, status=status, values=values, error=error)
