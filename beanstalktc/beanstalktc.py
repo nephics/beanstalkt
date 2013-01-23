@@ -218,7 +218,7 @@ class Client(object):
         else:
             # it is a dict
             conv = lambda v: ((float(v) if '.' in v else int(v))
-                if v[0].isdigit() or v[-1].isdigit() else v)
+                if v.replace('.', '').isdigit() else v)
             resp.body = dict((k, conv(v.strip())) for k, v in
                     (s.split(':') for s in spl))
         self._do_callback(cb, resp)
