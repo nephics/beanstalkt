@@ -50,7 +50,7 @@ class Bunch:
 
 class BeanstalkException(Bunch, Exception):
     def __str__(self):
-        return '{}: {} returned for command {}'.format(
+        return '{}: {} in reply to command {}'.format(
             self.__class__.__name__, self.status, self.request.cmd)
 
 
