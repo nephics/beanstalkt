@@ -12,7 +12,9 @@ The code and documentation is licensed under the Apache Licence, Version 2.0 ([h
 
 ## Example client usage
 
-This simple example involves the most basic operations of putting a job in the queue, reserving and deleting it (the code are in `demo.py`):
+The following is an example on how to use the client's API in a program. 
+
+The example show use of the most fundamental operations when using beanstalkd: putting a job in the queue, reserving and deleting it (the code are in `demo.py`):
 
     import tornado.ioloop
     import beanstalkt
@@ -50,6 +52,31 @@ Executing the script (`python demo.py`) with beanstalkd running produces the fol
 Where `jid` is the job id that beanstalkd has given the job when putting in on the queue.
 
 The client will attempt to automatically re-connect if the socket connection to beanstalkd is closed unexpectedly. In other cases where an error occur, an exception will be passed to the callback function.
+
+### Command line client
+
+The package also includes a command line client for interacting with beanstalkd directly from the commandline. Here is an example usage corresponding to the code example above:
+
+Put a job in the default tube (program returns the jid of the new job):
+
+    > python -m beanstalkt.cmd put "A job to work on"
+    1
+
+Reserved a job from the default tube and delete it:
+
+    > python -m beanstalkt.cmd reserve delete
+    {
+      "body": "A job to work on", 
+      "jid": 1
+    }
+
+The documentation is available using the `-h` option, e.g.:
+
+    > python -m beanstalkt.cmd -h
+    > python -m beanstalkt.cmd put -h
+    > python -m beanstalkt.cmd reserve -h
+
+All relevant commands are available via the command line client.
 
 ## The job lifecycle
 
@@ -248,6 +275,6 @@ The `pause_tube` command can delay any new job being reserved for a given time.
 
 ## Implementation notes
 
-Tests are contained in `btc_test.py` and all tests cases can be run by `python btc_test.py`. 
+Tests are contained in `btc_test.py` and all tests cases can be run by `python bt_test.py` in the source directory.
 
 The beanstalkd protocol uses YAML for communicating the various stats and lists. The client has a crude YAML parser, suitable only for parsing simple lists and dicts, which eliminates the dependency of a YAML parser.
