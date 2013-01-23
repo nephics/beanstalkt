@@ -1,12 +1,12 @@
 from setuptools import setup
 
-setup(name='beanstalktc',
-      version='0.3.2',
+setup(name='beanstalkt',
+      version='0.4.0',
       description='An async beanstalkd client for Tornado',
       author='Jacob Sondergaard',
       author_email='jacob@nephics.com',
       license="http://www.apache.org/licenses/LICENSE-2.0",
-      url='https://bitbucket.org/nephics/beanstalktc',
-      packages=['beanstalktc'],
+      url='https://bitbucket.org/nephics/beanstalkt',
+      packages=['beanstalkt'],
       requires=['tornado(>=2.4)']
 )

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""beanstalktc - An async beanstalkd client for Tornado"""
+"""beanstalkt - An async beanstalkd client for Tornado"""
 
 __license__ = """
 Copyright (C) 2012-2013 Nephics AB
@@ -20,7 +20,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-__version__ = '0.3.2'
+__version__ = '0.4.0'
 
 import socket
 import time

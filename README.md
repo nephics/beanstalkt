@@ -1,4 +1,4 @@
-# beanstalktc: An async beanstalkd client for Tornado
+# beanstalkt: An async beanstalkd client for Tornado
 
 ## About beanstalkd
 
@@ -15,7 +15,7 @@ The code and documentation is licensed under the Apache Licence, Version 2.0 ([h
 This simple example involves the most basic operations of putting a job in the queue, reserving and deleting it (the code are in `demo.py`):
 
     import tornado.ioloop
-    import beanstalktc
+    import beanstalkt
 
     def show(msg, value, cb):
       print msg % value
@@ -33,10 +33,10 @@ This simple example involves the most basic operations of putting a job in the q
           "Reserved job %s", s, lambda: delete(s["jid"])))
     
     def delete(jid):
-      client.delete(jid, callback=lambda: show(
+      client.delete(jid, callback=lambda s: show(
           "Deleted job with jid %d", jid, stop))
 
-    client = beanstalktc.Client()
+    client = beanstalkt.Client()
     client.connect(put)
     ioloop = tornado.ioloop.IOLoop.instance()
     ioloop.start()
@@ -79,7 +79,7 @@ Tubes are created on demand whenever they are referenced. If a tube is empty (th
 
 The complete spec for the beanstalkd protocol is available in the repository.
 
-**`beanstalktc.Client(host='localhost', port=11300, connect_timeout=socket.getdefaulttimeout(), io_loop=None)`**  
+**`beanstalkt.Client(host='localhost', port=11300, connect_timeout=socket.getdefaulttimeout(), io_loop=None)`**  
 Creates a client object with methods for all beanstalkd commands as of version 1.8. The methods are described in the following.
 
 ### Connection methods

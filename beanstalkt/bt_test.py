@@ -1,13 +1,13 @@
 import tornado.testing
 
-import beanstalktc
+import beanstalkt
 
 
 class BeanstalkTest(tornado.testing.AsyncTestCase):
 
     def setUp(self):
         tornado.testing.AsyncTestCase.setUp(self)
-        self.btc = beanstalktc.Client(io_loop=self.io_loop)
+        self.btc = beanstalkt.Client(io_loop=self.io_loop)
         self.btc.connect(self.stop)
         self.wait(timeout=0.1)
 
@@ -59,7 +59,7 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
         self.btc.kick_job(jid, callback=self.stop)
         try:
             self.wait()
-        except beanstalktc.UnexpectedResponse as (_, status, __):
+        except beanstalkt.UnexpectedResponse as (_, status, __):
             if status != 'UNKNOWN_COMMAND':
                 raise
             # kick-job command is not available in Beanstalkd version <= 1.7
@@ -93,5 +93,5 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
 if __name__ == '__main__':
     import sys
     if len(sys.argv) == 1:
-        sys.argv.append('btc_test')
+        sys.argv.append('bt_test')
     tornado.testing.main()
