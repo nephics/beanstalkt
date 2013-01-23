@@ -513,7 +513,7 @@ class Client(object):
         self._interact(request, callback)
 
     def list_tubes_watched(self, callback=None):
-        """List of all tubes being watched."""
+        """List of tubes currently being watched."""
         request = Bunch(cmd='list-tubes-watched', ok=['OK'], read_body=True,
                 parse_yaml=True)
         self._interact(request, callback)
