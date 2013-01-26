@@ -392,7 +392,7 @@ class Client(object):
 
         request = Bunch(cmd='watch {}'.format(name), ok=['WATCHING'],
                 read_value=True)
-        self._interact(request, callback)
+        self._interact(request, watching)
 
     def ignore(self, name, callback=None):
         """Stop watching tube with given name.
