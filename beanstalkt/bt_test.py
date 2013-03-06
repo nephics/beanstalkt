@@ -21,18 +21,18 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
         # put the job on the queue
         body = 'test job'
         self.btc.put(body, callback=self.stop)
-        jid = self.wait()
-        self.assertIsInstance(jid, int)
+        job_id = self.wait()
+        self.assertIsInstance(job_id, int)
 
         # reserve the job
         self.btc.reserve(callback=self.stop)
         job = self.wait()
         self.assertIsNotNone(job)
-        self.assertEqual(job['jid'], jid)
+        self.assertEqual(job['id'], job_id)
         self.assertEqual(job['body'], body)
 
         # delete the job
-        self.btc.delete(jid, callback=self.stop)
+        self.btc.delete(job_id, callback=self.stop)
         self.wait()
 
     def test_peek_bury_kick(self):
@@ -40,11 +40,11 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
         # put the job on the queue with 1 sec delay
         body = 'test job'
         self.btc.put(body, delay=1, callback=self.stop)
-        jid = self.wait()
+        job_id = self.wait()
 
         def check(job):
             self.assertNotIsInstance(job, Exception)
-            self.assertEqual(job['jid'], jid)
+            self.assertEqual(job['id'], job_id)
             self.assertEqual(job['body'], body)
 
         # peak the next delayed job
@@ -52,11 +52,11 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
         check(self.wait())
 
         # peak the job
-        self.btc.peek(jid, callback=self.stop)
+        self.btc.peek(job_id, callback=self.stop)
         check(self.wait())
 
         # kick the job to ready
-        self.btc.kick_job(jid, callback=self.stop)
+        self.btc.kick_job(job_id, callback=self.stop)
         try:
             self.wait()
         except beanstalkt.UnexpectedResponse as (_, status, __):
@@ -74,7 +74,7 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
         self.btc.reserve(callback=self.stop)
         job = self.wait()
         check(job)
-        self.btc.bury(jid, callback=self.stop)
+        self.btc.bury(job_id, callback=self.stop)
         self.wait()
 
         # peak the next buried job
@@ -86,7 +86,7 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
         self.assertEqual(self.wait(), 1)
 
         # delete the job
-        self.btc.delete(jid, callback=self.stop)
+        self.btc.delete(job_id, callback=self.stop)
         self.wait()
 
 

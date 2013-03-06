@@ -28,15 +28,15 @@ The example show use of the most fundamental operations when using beanstalkd: p
     
     def put():
       client.put("A job to work on", callback=lambda s: show(
-          "Queued a job with jid %d", s, reserve))
+          "Queued a job with id %d", s, reserve))
     
     def reserve():
       client.reserve(callback=lambda s: show(
-          "Reserved job %s", s, lambda: delete(s["jid"])))
+          "Reserved job %s", s, lambda: delete(s["id"])))
     
-    def delete(jid):
-      client.delete(jid, callback=lambda s: show(
-          "Deleted job with jid %d", jid, stop))
+    def delete(job_id):
+      client.delete(job_id, callback=lambda s: show(
+          "Deleted job with id %d", job_id, stop))
 
     client = beanstalkt.Client()
     client.connect(put)
@@ -45,11 +45,11 @@ The example show use of the most fundamental operations when using beanstalkd: p
 
 Executing the script (`python demo.py`) with beanstalkd running produces the following output:
 
-    Queued a job with jid 1
-    Reserved job {"body": "A job to work on", "jid": 1}
-    Deleted job with jid 1
+    Queued a job with id 1
+    Reserved job {"body": "A job to work on", "id": 1}
+    Deleted job with id 1
 
-Where `jid` is the job id that beanstalkd has given the job when putting in on the queue.
+Where `id` is the job id that beanstalkd has given the job when putting in on the queue.
 
 The client will attempt to automatically re-connect if the socket connection to beanstalkd is closed unexpectedly. In other cases where an error occur, an exception will be passed to the callback function.
 
@@ -57,7 +57,7 @@ The client will attempt to automatically re-connect if the socket connection to 
 
 The package also includes a command line client for interacting with beanstalkd directly from the commandline. Here is an example usage corresponding to the code example above:
 
-Put a job in the default tube (program returns the jid of the new job):
+Put a job in the default tube (program returns the id of the new job):
 
     > python -m beanstalkt.cmd put "A job to work on"
     1
@@ -67,7 +67,7 @@ Reserved a job from the default tube and delete it:
     > python -m beanstalkt.cmd reserve delete
     {
       "body": "A job to work on", 
-      "jid": 1
+      "id": 1
     }
 
 The documentation is available using the `-h` option, e.g.:
@@ -142,16 +142,16 @@ A timeout value of 0 will cause the server to immediately return either a respon
 
 Once a job is reserved for the client, the client has limited time to run (TTR) the job before the job times out. When the job times out, the server will put the job back into the ready queue. Both the TTR and the actual time left can be found in response to the `stats-job` command.
 
-**`delete(jid, callback=None)`**  
+**`delete(job_id, callback=None)`**  
 Removes a job from the server entirely. It is normally used by the client when the job has successfully run to completion. A client can delete jobs that it has `reserved`, `ready` jobs, `delayed` jobs, and jobs that are `buried`.
 
-**`release(jid, priority=DEFAULT_PRIORITY, delay=0, callback=None)`**  
+**`release(job_id, priority=DEFAULT_PRIORITY, delay=0, callback=None)`**  
 Puts a reserved job back into the ready queue (and marks its state as ready) to be run by any client. It is normally used when the job fails because of a transitory error.
 
-**`bury(jid, priority=DEFAULT_PRIORITY, callback=None)`**  
+**`bury(job_id, priority=DEFAULT_PRIORITY, callback=None)`**  
 The `bury` command puts a job into the "buried" state. Buried jobs are put into a FIFO linked list and will not be touched by the server again until a client kicks them with the `kick` command.
 
-**`touch(jid, callback=None)`**  
+**`touch(job_id, callback=None)`**  
 The `touch` command allows a worker to request more time to work on a job. This is useful for jobs that potentially take a long time, but you still want the benefits of a TTR pulling a job away from an unresponsive worker. A worker may periodically tell the server that it’s still alive and processing a job (e.g. it may do this on `DEADLINE_SOON`).
 
 **`watch(name, callback=None)`**  
@@ -162,7 +162,7 @@ The `ignore` command is for consumers. It removes the named tube from the watch 
 
 ## Other commands
 
-**`peek(jid, callback=None)`**  
+**`peek(job_id, callback=None)`**  
 **`peek_ready(callback=None)`**  
 **`peek_delayed(callback=None)`**  
 **`peek_buried(callback=None)`**  
@@ -171,10 +171,10 @@ The `peek` commands let the client inspect a job in the system. There are four v
 **`kick(bound=1, callback=None)`**  
 The `kick` command applies only to the currently used tube. It moves jobs into the ready queue. If there are any buried jobs, it will only kick buried jobs.
 
-**`kick_job(jid, callback=None)`**  
+**`kick_job(job_id, callback=None)`**  
 The `kick_job` command is a variant of kick that operates with a single job identified by its job id. If the given job id exists and is in a buried or delayed state, it will be moved to the ready queue of the the same tube where it currently belongs.
 
-**`stats_job(jid, callback=None)`**  
+**`stats_job(job_id, callback=None)`**  
 The `stats_job` command gives statistical information about the specified job if it exists. The callback gets a Python `dict` containing these keys:
 
 * `id` is the job id (mid)

@@ -20,7 +20,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 
 import socket
 import time
@@ -194,8 +194,8 @@ class Client(object):
         else:
             # read the body including the terminating two bytes of crlf
             if len(values) == 2:
-                jid, size = int(values[0]), int(values[1])
-                resp.jid = int(jid)
+                job_id, size = int(values[0]), int(values[1])
+                resp.job_id = int(job_id)
             else:
                 size = int(values[0])
             self._stream.read_bytes(size + 2,
@@ -208,7 +208,7 @@ class Client(object):
         else:
             # don't parse body, it is a job!
             # end the request and callback with results
-            resp.body = {'jid': resp.jid, 'body': data}
+            resp.body = {'id': resp.job_id, 'body': data}
             self._do_callback(cb, resp)
 
     def _parse_yaml(self, data, resp, cb):
@@ -269,7 +269,7 @@ class Client(object):
         The job is assigned a Time To Run (ttr, in seconds), the mininum is
         1 sec., default is ttr=120 sec.
 
-        Calls back with jid (job id) when job is inserted. If an error occured,
+        Calls back with id when job is inserted. If an error occured,
         the callback gets a Buried or CommandFailed exception. The job is
         buried when either the body is too big, so server ran out of memory,
         or when the server is in draining mode.
@@ -313,7 +313,7 @@ class Client(object):
         amount of time the client will will hold communication until a job
         becomes available.
 
-        Calls back with a job dict (jid and body). If the request timed out,
+        Calls back with a job dict (keys id and body). If the request timed out,
         the callback gets a TimedOut exception. If a reserved job has deadline
         within the next second, the callback gets a DeadlineSoon exception.
         """
@@ -325,18 +325,19 @@ class Client(object):
                 'TIMED_OUT'], read_body=True)
         self._interact(request, callback)
 
-    def delete(self, jid, callback=None):
-        """Delete job with given jid.
+    def delete(self, job_id, callback=None):
+        """Delete job with given id.
 
         Calls back when job is deleted. If the job does not exist, or it is not
         neither reserved by the client, ready or buried; the callback gets a
         CommandFailed exception.
         """
-        request = Bunch(cmd='delete {}'.format(jid), ok=['DELETED'],
+        request = Bunch(cmd='delete {}'.format(job_id), ok=['DELETED'],
                 err=['NOT_FOUND'])
         self._interact(request, callback)
 
-    def release(self, jid, priority=DEFAULT_PRIORITY, delay=0, callback=None):
+    def release(self, job_id, priority=DEFAULT_PRIORITY, delay=0,
+            callback=None):
         """Release a reserved job back into the ready queue.
 
         A new priority can be assigned to the job.
@@ -349,24 +350,24 @@ class Client(object):
         gets a Buried exception. If the job does not exist, or it is not
         reserved by the client, the callback gets a CommandFailed exception.
         """
-        request = Bunch(cmd='release {} {} {}'.format(jid, priority, delay),
+        request = Bunch(cmd='release {} {} {}'.format(job_id, priority, delay),
                 ok=['RELEASED'], err=['BURIED', 'NOT_FOUND'])
         self._interact(request, callback)
 
-    def bury(self, jid, priority=DEFAULT_PRIORITY, callback=None):
-        """Bury job with given jid.
+    def bury(self, job_id, priority=DEFAULT_PRIORITY, callback=None):
+        """Bury job with given id.
 
         A new priority can be assigned to the job.
 
         Calls back when job is burried. If the job does not exist, or it is not
         reserved by the client, the callback gets a CommandFailed exception.
         """
-        request = Bunch(cmd='bury {} {}'.format(jid, priority), ok=['BURIED'],
-                err=['NOT_FOUND'])
+        request = Bunch(cmd='bury {} {}'.format(job_id, priority),
+                ok=['BURIED'], err=['NOT_FOUND'])
         self._interact(request, callback)
 
-    def touch(self, jid, callback=None):
-        """Touch job with given jid.
+    def touch(self, job_id, callback=None):
+        """Touch job with given id.
 
         This is for requesting more time to work on a reserved job before it
         expires.
@@ -374,7 +375,7 @@ class Client(object):
         Calls back when job is touched. If the job does not exist, or it is not
         reserved by the client, the callback gets a CommandFailed exception.
         """
-        request = Bunch(cmd='touch {}'.format(jid), ok=['TOUCHED'],
+        request = Bunch(cmd='touch {}'.format(job_id), ok=['TOUCHED'],
                 err=['NOT_FOUND'])
         self._interact(request, callback)
 
@@ -422,18 +423,18 @@ class Client(object):
                 err=['NOT_FOUND'], read_body=True)
         self._interact(request, callback)
 
-    def peek(self, jid, callback=None):
-        """Peek at job with given jid.
+    def peek(self, job_id, callback=None):
+        """Peek at job with given id.
 
-        Calls back with a job dict (jid and body). If no job exists with that
-        jid, the callback gets a CommandFailed exception.
+        Calls back with a job dict (keys id and body). If no job exists with
+        that id, the callback gets a CommandFailed exception.
         """
-        self._peek(' {}'.format(jid), callback)
+        self._peek(' {}'.format(job_id), callback)
 
     def peek_ready(self, callback=None):
         """Peek at next ready job in the current tube.
 
-        Calls back with a job dict (jid and body). If no ready jobs exist,
+        Calls back with a job dict (keys id and body). If no ready jobs exist,
         the callback gets a CommandFailed exception.
         """
         self._peek('-ready', callback)
@@ -441,7 +442,7 @@ class Client(object):
     def peek_delayed(self, callback=None):
         """Peek at next delayed job in the current tube.
 
-        Calls back with a job dict (jid and body). If no delayed jobs exist,
+        Calls back with a job dict (keys id and body). If no delayed jobs exist,
         the callback gets a CommandFailed exception.
         """
         self._peek('-delayed', callback)
@@ -449,7 +450,7 @@ class Client(object):
     def peek_buried(self, callback=None):
         """Peek at next buried job in the current tube.
 
-        Calls back with a job dict (jid and body). If no buried jobs exist,
+        Calls back with a job dict (keys id and body). If no buried jobs exist,
         the callback gets a CommandFailed exception.
         """
         self._peek('-buried', callback)
@@ -463,25 +464,25 @@ class Client(object):
                 read_value=True)
         self._interact(request, callback)
 
-    def kick_job(self, jid, callback=None):
+    def kick_job(self, job_id, callback=None):
         """Kick job with given id into the ready queue.
         (Requires Beanstalkd version >= 1.8)
 
-        Calls back when job is kicked. If no job exists with that jid, or if
+        Calls back when job is kicked. If no job exists with that id, or if
         job is not in a kickable state, the callback gets a CommandFailed
         exception.
         """
-        request = Bunch(cmd='kick-job {}'.format(jid), ok=['KICKED'],
+        request = Bunch(cmd='kick-job {}'.format(job_id), ok=['KICKED'],
                 err=['NOT_FOUND'])
         self._interact(request, callback)
 
-    def stats_job(self, jid, callback=None):
-        """A dict of stats about the job with given jid.
+    def stats_job(self, job_id, callback=None):
+        """A dict of stats about the job with given id.
 
-        If no job exists with that jid, the callback gets a CommandFailed
+        If no job exists with that id, the callback gets a CommandFailed
         exception.
         """
-        request = Bunch(cmd='stats-job {}'.format(jid), ok=['OK'],
+        request = Bunch(cmd='stats-job {}'.format(job_id), ok=['OK'],
                 err=['NOT_FOUND'], read_body=True, parse_yaml=True)
         self._interact(request, callback)
 

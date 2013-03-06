@@ -54,9 +54,9 @@ def main():
 
     # peek
     parser_peek = subparsers.add_parser('peek',
-            help='peek at job with given jid')
-    parser_peek.add_argument('jid', type=int,
-            help='the jid of the job to peek')
+            help='peek at job with given id')
+    parser_peek.add_argument('job_id', type=int,
+            help='the id of the job to peek')
     parser_peek.set_defaults(func=peek)
 
     # peek-ready
@@ -92,16 +92,16 @@ def main():
 
     # kick_job
     parser_kick_job = subparsers.add_parser('kick-job',
-            help='kick a job with given jid into the ready queue')
-    parser_kick_job.add_argument('jid', type=int,
-            help='the jid of the job to kick')
+            help='kick a job with given id into the ready queue')
+    parser_kick_job.add_argument('job_id', type=int,
+            help='the id of the job to kick')
     parser_kick_job.set_defaults(func=kick_job)
 
     # stats_job
     parser_stats_job = subparsers.add_parser('stats-job',
-            help='get stats for job with given jid')
-    parser_stats_job.add_argument('jid', type=int,
-            help='the jid of the job')
+            help='get stats for job with given id')
+    parser_stats_job.add_argument('job_id', type=int,
+            help='the id of the job')
     parser_stats_job.set_defaults(func=stats_job)
 
     # stats_tube
@@ -183,19 +183,19 @@ def reserve(action, timeout, watch, ignore_default, priority, delay, func):
 
         cb = success(lambda _: None)
         if action == 'delete':
-            client.delete(data['jid'], cb)
+            client.delete(data['id'], cb)
         elif action == 'release':
-            client.release(data['jid'], priority, delay, cb)
+            client.release(data['id'], priority, delay, cb)
         elif action == 'bury':
-            client.bury(data['jid'], priority, cb)
+            client.bury(data['id'], priority, cb)
 
     start(step1)
 
 
-def peek(jid, func):
+def peek(job_id, func):
     def step2(data):
         print json.dumps(data, indent=2)
-    start(lambda: client.peek(jid, success(step2)))
+    start(lambda: client.peek(job_id, success(step2)))
 
 
 def peek_ready(use, func):
@@ -212,7 +212,7 @@ def peek_delayed(use, func):
     def step2(data):
         print json.dumps(data, indent=2)
     start(lambda: client.use(use, step1))
-    
+
 
 def peek_buried(use, func):
     def step1(_):
@@ -230,14 +230,14 @@ def kick(bound, use, func):
     start(lambda: client.use(use, step1))
 
 
-def kick_job(jid, func):
-    start(lambda: client.kick_job(jid, success(lambda _: None)))
+def kick_job(job_id, func):
+    start(lambda: client.kick_job(job_id, success(lambda _: None)))
 
 
-def stats_job(jid, func):
+def stats_job(job_id, func):
     def step2(data):
         print json.dumps(data, indent=2)
-    start(lambda: client.stats_job(jid, success(step2)))
+    start(lambda: client.stats_job(job_id, success(step2)))
 
 
 def stats_tube(name, func):
