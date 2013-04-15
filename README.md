@@ -8,6 +8,8 @@ Its interface is generic, but was originally designed for reducing the latency o
 
 This module contains a beanstalkd client for [Tornado](http://www.tornadoweb.org) implemented using the asynchronous (non-blocking) [IOStream](http://www.tornadoweb.org/documentation/iostream.html) socket wrapper.
 
+The code has been tested with Python 3.3 and 2.7.
+
 The code and documentation is licensed under the Apache Licence, Version 2.0 ([http://www.apache.org/licenses/LICENSE-2.0.html]()).
 
 ## Example client usage
@@ -20,14 +22,14 @@ The example show use of the most fundamental operations when using beanstalkd: p
     import beanstalkt
 
     def show(msg, value, cb):
-      print msg % value
+      print(msg % value)
       cb()
     
     def stop():
       client.close(ioloop.stop)
     
     def put():
-      client.put("A job to work on", callback=lambda s: show(
+      client.put(b"A job to work on", callback=lambda s: show(
           "Queued a job with id %d", s, reserve))
     
     def reserve():
@@ -46,7 +48,7 @@ The example show use of the most fundamental operations when using beanstalkd: p
 Executing the script (`python demo.py`) with beanstalkd running produces the following output:
 
     Queued a job with id 1
-    Reserved job {"body": "A job to work on", "id": 1}
+    Reserved job {'body': b'A job to work on', 'id': 1}
     Deleted job with id 1
 
 Where `id` is the job id that beanstalkd has given the job when putting in on the queue.

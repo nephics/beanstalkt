@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='beanstalkt',
-      version='0.5.0',
+      version='0.6.0',
       description='An async beanstalkd client for Tornado',
       author='Jacob Sondergaard',
       author_email='jacob@nephics.com',

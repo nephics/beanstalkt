@@ -19,7 +19,7 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
     def test_basics(self):
         '''Test put-reserve-delete cycle'''
         # put the job on the queue
-        body = 'test job'
+        body = b'test job'
         self.btc.put(body, callback=self.stop)
         job_id = self.wait()
         self.assertIsInstance(job_id, int)
@@ -38,7 +38,7 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
     def test_peek_bury_kick(self):
         '''Test peeking, burying and kicking'''
         # put the job on the queue with 1 sec delay
-        body = 'test job'
+        body = b'test job'
         self.btc.put(body, delay=1, callback=self.stop)
         job_id = self.wait()
 
@@ -59,7 +59,8 @@ class BeanstalkTest(tornado.testing.AsyncTestCase):
         self.btc.kick_job(job_id, callback=self.stop)
         try:
             self.wait()
-        except beanstalkt.UnexpectedResponse as (_, status, __):
+        except beanstalkt.UnexpectedResponse as e:
+            status = e[1]
             if status != 'UNKNOWN_COMMAND':
                 raise
             # kick-job command is not available in Beanstalkd version <= 1.7

@@ -144,7 +144,7 @@ def start(callback):
 def success(callback, last=True):
     def _check_point(data):
         if isinstance(data, Exception):
-            print str(data)
+            print(data)
             stop()
         else:
             callback(data)
@@ -158,10 +158,10 @@ def stop(*args):
 
 def put(body, priority, use, delay, ttr, func):
     def step1(_):
-        client.put(body, priority=priority, delay=delay, ttr=ttr,
+        client.put(body.encode('utf8'), priority=priority, delay=delay, ttr=ttr,
                 callback=success(step2))
     def step2(data):
-        print data
+        print(data)
     start(lambda: client.use(use, step1))
 
 
@@ -179,7 +179,8 @@ def reserve(action, timeout, watch, ignore_default, priority, delay, func):
         client.reserve(timeout, success(step3, last=False))
 
     def step3(data):
-        print json.dumps(data, indent=2)
+        data['body'] = data['body'].decode('utf8')
+        print(json.dumps(data, indent=2))
 
         cb = success(lambda _: None)
         if action == 'delete':
@@ -194,7 +195,8 @@ def reserve(action, timeout, watch, ignore_default, priority, delay, func):
 
 def peek(job_id, func):
     def step2(data):
-        print json.dumps(data, indent=2)
+        data['body'] = data['body'].decode('utf8')
+        print(json.dumps(data, indent=2))
     start(lambda: client.peek(job_id, success(step2)))
 
 
@@ -202,7 +204,8 @@ def peek_ready(use, func):
     def step1(_):
         client.peek_ready(success(step2))
     def step2(data):
-        print json.dumps(data, indent=2)
+        data['body'] = data['body'].decode('utf8')
+        print(json.dumps(data, indent=2))
     start(lambda: client.use(use, step1))
 
 
@@ -210,7 +213,8 @@ def peek_delayed(use, func):
     def step1(_):
         client.peek_delayed(success(step2))
     def step2(data):
-        print json.dumps(data, indent=2)
+        data['body'] = data['body'].decode('utf8')
+        print(json.dumps(data, indent=2))
     start(lambda: client.use(use, step1))
 
 
@@ -218,7 +222,8 @@ def peek_buried(use, func):
     def step1(_):
         client.peek_buried(success(step2))
     def step2(data):
-        print json.dumps(data, indent=2)
+        data['body'] = data['body'].decode('utf8')
+        print(json.dumps(data, indent=2))
     start(lambda: client.use(use, step1))
 
 
@@ -226,7 +231,7 @@ def kick(bound, use, func):
     def step1(_):
         client.kick(bound, success(step2))
     def step2(data):
-        print data
+        print(data)
     start(lambda: client.use(use, step1))
 
 
@@ -236,25 +241,25 @@ def kick_job(job_id, func):
 
 def stats_job(job_id, func):
     def step2(data):
-        print json.dumps(data, indent=2)
+        print(json.dumps(data, indent=2))
     start(lambda: client.stats_job(job_id, success(step2)))
 
 
 def stats_tube(name, func):
     def step2(data):
-        print json.dumps(data, indent=2)
+        print(json.dumps(data, indent=2))
     start(lambda: client.stats_tube(name, success(step2)))
 
 
 def stats(func):
     def step2(data):
-        print json.dumps(data, indent=2)
+        print(json.dumps(data, indent=2))
     start(lambda: client.stats(success(step2)))
 
 
 def list_tubes(func):
     def step2(data):
-        print json.dumps(data, indent=2)
+        print(json.dumps(data, indent=2))
     start(lambda: client.list_tubes(success(step2)))
 
 

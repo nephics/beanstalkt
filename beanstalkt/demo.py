@@ -2,14 +2,14 @@ import tornado.ioloop
 import beanstalkt
 
 def show(msg, value, cb):
-  print msg % value
+  print(msg % value)
   cb()
 
 def stop():
   client.close(ioloop.stop)
 
 def put():
-  client.put("A job to work on", callback=lambda s: show(
+  client.put(b"A job to work on", callback=lambda s: show(
       "Queued a job with id %d", s, reserve))
 
 def reserve():
