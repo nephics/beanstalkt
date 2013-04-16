@@ -1,2 +1,2 @@
-from beanstalkt import (Client, BeanstalkException, UnexpectedResponse,
+from .beanstalkt import (Client, BeanstalkException, UnexpectedResponse,
         CommandFailed, Buried, DeadlineSoon, TimedOut)
