@@ -132,7 +132,8 @@ class Client(object):
             self._stream.set_close_callback(callback)
         if self.closed():
             # already closed
-            callback()
+            if callback:
+                callback()
         else:
             self._stream.write(b'quit\r\n', self._stream.close)
 
