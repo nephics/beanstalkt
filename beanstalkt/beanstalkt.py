@@ -2,10 +2,8 @@
 """beanstalkt - An async beanstalkd client for Tornado"""
 
 __license__ = """
-Copyright (C) 2012-2013 Nephics AB
-
-Parts of the code adopted from the beanstalkc project are:
-    Copyright (C) 2008-2012 Andreas Bolka
+Copyright (C) 2012-2014 Nephics AB
+Copyright (C) 2008-2012 Andreas Bolka  (beanstalkc project)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
