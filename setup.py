@@ -23,7 +23,7 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-version = find_version('beanstalkt')
+version = find_version('beanstalkt', 'beanstalkt.py')
 
 setup(
     name='beanstalkt',
