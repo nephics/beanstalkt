@@ -29,6 +29,7 @@ from tornado.gen import coroutine, Task, Return, Wait, Callback
 from tornado.ioloop import IOLoop
 from tornado.iostream import IOStream
 from tornado import stack_context
+from tornado.util import ObjectDict
 
 
 DEFAULT_PRIORITY = 2 ** 31
@@ -171,7 +172,7 @@ class Client(object):
         status, values = spl[0], spl[1:]
 
         error = None
-        err_args = dict(request=req, status=status, values=values)
+        err_args = ObjectDict(request=req, status=status, values=values)
 
         if req.ok and status in req.ok:
             # avoid raising a Buried exception when using the bury command
@@ -209,7 +210,7 @@ class Client(object):
         else:
             # don't parse body, it is a job!
             # end the request and callback with results
-            resp.body = {'id': resp.job_id, 'body': data}
+            resp.body = ObjectDict(id=resp.job_id, body=data)
             self._do_callback(cb, resp)
 
     def _parse_yaml(self, data, resp, cb):
@@ -223,7 +224,7 @@ class Client(object):
             # it is a dict
             conv = lambda v: ((float(v) if '.' in v else int(v))
                 if v.replace('.', '', 1).isdigit() else v)
-            resp.body = dict((k, conv(v.strip())) for k, v in
+            resp.body = ObjectDict((k, conv(v.strip())) for k, v in
                     (s.split(':') for s in spl))
         self._do_callback(cb, resp)
 
