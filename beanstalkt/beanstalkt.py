@@ -29,6 +29,7 @@ from tornado.gen import coroutine, Task, Return, Wait, Callback
 from tornado.ioloop import IOLoop
 from tornado.iostream import IOStream
 from tornado import stack_context
+from tornado import version as tornado_version
 from tornado.util import ObjectDict
 
 
@@ -113,7 +114,10 @@ class Client(object):
         self._talking = False
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM,
                 socket.IPPROTO_TCP)
-        self._stream = IOStream(self._socket, io_loop=self.io_loop)
+        if tornado_version >= '5.0':
+            self._stream = IOStream(self._socket)
+        else:
+            self._stream = IOStream(self._socket, io_loop=self.io_loop)
         self._stream.set_close_callback(self._reconnect)
         yield Task(self._stream.connect, (self.host, self.port))
 
